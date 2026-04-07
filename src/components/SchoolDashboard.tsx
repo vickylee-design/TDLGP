@@ -10,7 +10,6 @@ import {
   Info,
   ChevronDown,
   Smartphone,
-  ShieldAlert,
   LayoutGrid,
   TrendingUp,
   TrendingDown,
@@ -99,14 +98,6 @@ const SchoolDashboard: React.FC = () => {
     { name: '創造力', value: 15, color: '#8b5cf6' },
     { name: '娛樂', value: 10, color: '#f59e0b' },
     { name: '封鎖', value: 5, color: '#ef4444' },
-  ];
-
-  const webFilterData = [
-    { name: '賭博網站', value: Math.floor(Math.random() * 15) },
-    { name: '色情內容', value: Math.floor(Math.random() * 10) },
-    { name: '惡意軟體', value: Math.floor(Math.random() * 5) },
-    { name: '遊戲私服', value: Math.floor(Math.random() * 12) },
-    { name: '詐騙釣魚', value: Math.floor(Math.random() * 3) },
   ];
 
   const modalDevices = useMemo(() => {
@@ -297,36 +288,6 @@ const SchoolDashboard: React.FC = () => {
 
       {/* Charts Section */}
       <div className="space-y-6">
-        {/* Web Filtering Chart */}
-        <div 
-          onClick={() => setListFilter('violating')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-slate-200 hover:border-rose-300 transition-all cursor-pointer group"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-2">
-              <ShieldAlert className="w-5 h-5 text-rose-500" />
-              <h3 className="text-lg font-bold text-slate-800">不當網站攔截狀況 (Web Filtering)</h3>
-            </div>
-            <span className="text-xs font-bold text-rose-600 flex items-center group-hover:translate-x-1 transition-transform">
-              查看違規設備清單 <TrendingUp className="w-4 h-4 ml-1" />
-            </span>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={webFilterData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                <XAxis type="number" axisLine={true} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis dataKey="name" type="category" axisLine={true} tickLine={false} tick={{ fill: '#475569', fontSize: 12 }} width={80} />
-                <Tooltip 
-                  cursor={{fill: 'transparent'}}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="value" fill="#ef4444" radius={[0, 6, 6, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
         {/* Distribution Charts Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Device Type Distribution */}
