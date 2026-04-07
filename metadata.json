@@ -1,0 +1,5 @@
+{
+  "name": "Remix: TDLGP - 臺南市教學平板治理平台",
+  "description": "A comprehensive tablet learning behavior management and governance platform for Tainan City education, featuring a 3-tier architecture for Bureau, Schools, and Teachers.",
+  "requestFramePermissions": []
+}
