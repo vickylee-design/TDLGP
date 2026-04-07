@@ -49,14 +49,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
           { id: 'school-reports', icon: BarChart3, label: '報表' },
           { id: 'school-lifecycle', icon: RotateCcw, label: '設備生命週期' },
           { id: 'school-policy', icon: FileText, label: '校內政策微調' },
-          { id: 'school-repair', icon: Wrench, label: '報修與維運' },
         ];
-      case UserRole.TEACHER:
-        return [
-          { id: 'teacher-classroom', icon: MonitorPlay, label: '課堂廣播監控' },
-          { id: 'teacher-students', icon: Box, label: '班級平板庫' },
-          { id: 'teacher-history', icon: History, label: '課堂使用紀錄' },
-        ];
+      default:
+        return [];
     }
   };
 
@@ -69,7 +64,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
     // Set default view for new role
     if (newRole === UserRole.BUREAU) onViewChange('dashboard');
     if (newRole === UserRole.SCHOOL) onViewChange('school-dashboard');
-    if (newRole === UserRole.TEACHER) onViewChange('teacher-classroom');
   };
 
   return (
@@ -94,12 +88,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
             className={`w-full text-left px-3 py-2 text-sm font-medium rounded transition-colors ${currentRole === UserRole.SCHOOL ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
           >
             學校端 (School)
-          </button>
-          <button 
-             onClick={() => handleRoleSwitch(UserRole.TEACHER)}
-            className={`w-full text-left px-3 py-2 text-sm font-medium rounded transition-colors ${currentRole === UserRole.TEACHER ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
-          >
-            教師端 (Teacher)
           </button>
         </div>
       </div>

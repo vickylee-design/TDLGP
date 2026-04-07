@@ -1,7 +1,6 @@
 export enum UserRole {
   BUREAU = 'BUREAU',   // 教育局端
-  SCHOOL = 'SCHOOL',   // 學校端
-  TEACHER = 'TEACHER'  // 教師端
+  SCHOOL = 'SCHOOL'    // 學校端
 }
 
 export interface Student {

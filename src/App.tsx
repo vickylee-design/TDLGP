@@ -19,10 +19,6 @@ import SchoolDeviceManagement from './components/SchoolDeviceManagement';
 import SchoolGroupManagement from './components/SchoolGroupManagement';
 import SchoolDeviceLifecycle from './components/SchoolDeviceLifecycle';
 import SchoolPolicyAdjustment from './components/SchoolPolicyAdjustment';
-import SchoolRepairMaintenance from './components/SchoolRepairMaintenance';
-import TeacherDashboard from './components/TeacherDashboard';
-import TeacherStudentList from './components/TeacherStudentList';
-import TeacherLearningHistory from './components/TeacherLearningHistory';
 import { UserRole } from './types';
 import { Bell, Search, User, CheckCircle2, AlertCircle, Info, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -57,8 +53,6 @@ const AppContent: React.FC = () => {
   React.useEffect(() => {
     if (currentView.startsWith('school-')) {
       if (currentRole !== UserRole.SCHOOL) setCurrentRole(UserRole.SCHOOL);
-    } else if (currentView.startsWith('teacher-')) {
-      if (currentRole !== UserRole.TEACHER) setCurrentRole(UserRole.TEACHER);
     } else {
       if (currentRole !== UserRole.BUREAU) setCurrentRole(UserRole.BUREAU);
     }
@@ -91,13 +85,7 @@ const AppContent: React.FC = () => {
         if (currentView === 'school-reports') return <SchoolReports />;
         if (currentView === 'school-lifecycle') return <SchoolDeviceLifecycle />;
         if (currentView === 'school-policy') return <SchoolPolicyAdjustment />;
-        if (currentView === 'school-repair') return <SchoolRepairMaintenance />;
         return <SchoolDashboard />;
-        
-      case UserRole.TEACHER:
-        if (currentView === 'teacher-students') return <TeacherStudentList />;
-        if (currentView === 'teacher-history') return <TeacherLearningHistory />;
-        return <TeacherDashboard />;
         
       default:
         return <BureauDashboard />;
@@ -108,7 +96,6 @@ const AppContent: React.FC = () => {
     switch (currentRole) {
       case UserRole.BUREAU: return '教育局端 (Education Bureau)';
       case UserRole.SCHOOL: return '學校端 (School Admin)';
-      case UserRole.TEACHER: return '教師端 (Teacher)';
     }
   };
 
