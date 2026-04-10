@@ -2,17 +2,13 @@ import React from 'react';
 import { UserRole } from '../types';
 import { 
   LayoutDashboard, 
-  ShieldCheck, 
   BarChart3, 
   Settings, 
   School, 
   Users, 
-  RotateCcw, 
-  FileText, 
   Wrench,
   LogOut,
   MonitorPlay,
-  Globe,
   Tablet,
   Box,
   History
@@ -34,8 +30,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
           { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
           { id: 'schools', icon: School, label: '學校管理' },
           { id: 'devices', icon: Tablet, label: '設備管理' },
-          { id: 'policies', icon: ShieldCheck, label: '全域政策管理' },
-          { id: 'web-filter', icon: Globe, label: '不當網站管理' },
           { id: 'reports-new', icon: BarChart3, label: '報表' },
           { id: 'account-permissions', icon: Users, label: '帳號權限' },
           { id: 'operation-logs', icon: History, label: '操作記錄' },
@@ -47,8 +41,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
           { id: 'school-devices', icon: Tablet, label: '設備管理' },
           { id: 'school-groups', icon: Users, label: '群組管理' },
           { id: 'school-reports', icon: BarChart3, label: '報表' },
-          { id: 'school-lifecycle', icon: RotateCcw, label: '設備生命週期' },
-          { id: 'school-policy', icon: FileText, label: '校內政策微調' },
         ];
       default:
         return [];

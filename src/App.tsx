@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import BureauDashboard from './components/BureauDashboard';
-import BureauPolicyManagement from './components/BureauPolicyManagement';
-import BureauWebFilter from './components/BureauWebFilter';
 import BureauDeviceManagement from './components/BureauDeviceManagement';
 import BureauSchoolManagement from './components/BureauSchoolManagement';
 import BureauReports from './components/BureauReports';
@@ -17,8 +15,6 @@ import SchoolClassManagement from './components/SchoolClassManagement';
 import SchoolReports from './components/SchoolReports';
 import SchoolDeviceManagement from './components/SchoolDeviceManagement';
 import SchoolGroupManagement from './components/SchoolGroupManagement';
-import SchoolDeviceLifecycle from './components/SchoolDeviceLifecycle';
-import SchoolPolicyAdjustment from './components/SchoolPolicyAdjustment';
 import { UserRole } from './types';
 import { Bell, Search, User, CheckCircle2, AlertCircle, Info, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -65,9 +61,7 @@ const AppContent: React.FC = () => {
   const renderDashboard = () => {
     switch (currentRole) {
       case UserRole.BUREAU:
-        if (currentView === 'policies' || currentView === 'policy') return <BureauPolicyManagement />;
         if (currentView === 'devices' || currentView === 'device-management') return <BureauDeviceManagement />;
-        if (currentView === 'web-filter') return <BureauWebFilter />;
         if (currentView === 'schools') return <BureauSchoolManagement />;
         if (currentView === 'reports') return <BureauReports />;
         if (currentView === 'reports-new') return <BureauNewReports />;
@@ -83,8 +77,6 @@ const AppContent: React.FC = () => {
         if (currentView === 'school-groups') return <SchoolGroupManagement />;
         if (currentView === 'school-classes') return <SchoolClassManagement />;
         if (currentView === 'school-reports') return <SchoolReports />;
-        if (currentView === 'school-lifecycle') return <SchoolDeviceLifecycle />;
-        if (currentView === 'school-policy') return <SchoolPolicyAdjustment />;
         return <SchoolDashboard />;
         
       default:
