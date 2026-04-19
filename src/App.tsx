@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'r
 import Sidebar from './components/Sidebar';
 import BureauDashboard from './components/BureauDashboard';
 import BureauDeviceManagement from './components/BureauDeviceManagement';
-import BureauSchoolManagement from './components/BureauSchoolManagement';
+import BureauDeviceManagementNew from './components/BureauDeviceManagementNew';
 import BureauReports from './components/BureauReports';
 import BureauNewReports from './components/BureauNewReports';
 import BureauAccountPermissions from './components/BureauAccountPermissions';
@@ -18,6 +18,7 @@ import SchoolGroupManagement from './components/SchoolGroupManagement';
 import { UserRole } from './types';
 import { Bell, Search, User, CheckCircle2, AlertCircle, Info, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Toaster } from 'sonner';
 
 interface Notification {
   id: string;
@@ -61,8 +62,8 @@ const AppContent: React.FC = () => {
   const renderDashboard = () => {
     switch (currentRole) {
       case UserRole.BUREAU:
+        if (currentView === 'devices-new') return <BureauDeviceManagementNew />;
         if (currentView === 'devices' || currentView === 'device-management') return <BureauDeviceManagement />;
-        if (currentView === 'schools') return <BureauSchoolManagement />;
         if (currentView === 'reports') return <BureauReports />;
         if (currentView === 'reports-new') return <BureauNewReports />;
         if (currentView === 'account-permissions') return <BureauAccountPermissions />;
@@ -222,6 +223,7 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <AppContent />
+      <Toaster position="top-right" expand={true} richColors />
     </HashRouter>
   );
 };

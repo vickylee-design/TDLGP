@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentRole, onRoleChange, currentVie
       case UserRole.BUREAU:
         return [
           { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-          { id: 'schools', icon: School, label: '學校管理' },
+          { id: 'devices-new', icon: Box, label: '設備管理 (新)' },
           { id: 'devices', icon: Tablet, label: '設備管理' },
           { id: 'reports-new', icon: BarChart3, label: '報表' },
           { id: 'account-permissions', icon: Users, label: '帳號權限' },

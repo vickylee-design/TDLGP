@@ -56,3 +56,46 @@ export interface TransferRequest {
   closingDocuments?: string[]; // File names
   rejectionReason?: string;
 }
+
+export enum AssetStatus {
+  NORMAL = '正常',
+  TRANSFERRING = '調撥中',
+  REPLACEMENT = '汰換',
+  SCRAPPED = '報廢'
+}
+
+export interface AssetHistory {
+  date: string;
+  action: '調撥' | '汰換' | '報廢' | '入庫' | '其他';
+  description: string;
+  remark?: string;
+  operator: string;
+}
+
+export interface AssetMaster {
+  // 基礎屬性
+  name: string;
+  serial: string; // Primary Key (SN)
+  model: string;
+  assignedSchool: string;
+  schoolCode: string;
+
+  // 技術狀態 (MDM API)
+  osVersion: string;
+  storageTotal: string;
+  storageRemaining: string;
+  battery: number;
+  lastConnection: string;
+
+  // 行政屬性
+  arrivalDate: string;
+  warrantyDate: string;
+  status: AssetStatus;
+  project: string; // 計畫別 (例如: 生生有平板, 前瞻計畫)
+
+  // 業務邏輯擴充
+  mdmReportedSchoolId?: string; // 用於比對 mismatch
+  usageHoursInherited: number; // 汰換繼承的時數
+  currentUsageHours: number;   // 當前設備時數
+  history: AssetHistory[];
+}

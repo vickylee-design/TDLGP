@@ -14,7 +14,9 @@ import {
   TrendingUp,
   TrendingDown,
   X,
-  Download
+  Download,
+  Calendar,
+  LineChart as LineChartIcon
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -26,7 +28,9 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line,
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -49,18 +53,24 @@ interface DeviceData {
 }
 
 // --- Mock Data ---
-const SCHOOL_OPTIONS = [
-  '大安國小', '中山國小', '中正國小', '信義國小', '仁愛國小', 
-  '和平國小', '成功國小', '忠孝國小', '博愛國小', '永春國小'
+const SCHOOL_STRUCTURE = {
+  '全市': [],
+  '台南市全國小': ['復興國小', '忠義國小', '勝利國小', '大同國小', '新興國小'],
+  '台南市全國中': ['安南國中', '永康國中', '新東國中', '崇明國中', '後甲國中']
+};
+
+const ALL_SCHOOLS = [
+  ...SCHOOL_STRUCTURE['台南市全國小'],
+  ...SCHOOL_STRUCTURE['台南市全國中']
 ];
 
 const MOCK_DEVICES: DeviceData[] = Array.from({ length: 100 }).map((_, i) => ({
   id: `dev-${i}`,
   name: `EDU-iPad-${String(i + 1).padStart(2, '0')}`,
   serial: `ABC${1000 + i}XYZ`,
-  model: i % 2 === 0 ? 'iPad Air (5th Gen)' : 'iPad (9th Gen)',
-  os: i % 2 === 0 ? 'iPadOS 17.2' : 'iPadOS 16.2',
-  school: SCHOOL_OPTIONS[i % SCHOOL_OPTIONS.length],
+  model: i % 4 === 0 ? 'iPad (10th Gen)' : i % 4 === 1 ? 'iPad (9th Gen)' : i % 4 === 2 ? 'iPad Air (5th Gen)' : 'iPad Pro',
+  os: 'iPadOS 17.2',
+  school: ALL_SCHOOLS[i % ALL_SCHOOLS.length],
   mdm: i % 3 === 0 ? 'Jamf Pro' : 'Intune',
   usageDuration: `${Math.floor(Math.random() * 100) + 10}h ${Math.floor(Math.random() * 60)}m`,
   lastConnection: '2024-03-20 14:30',
@@ -68,19 +78,27 @@ const MOCK_DEVICES: DeviceData[] = Array.from({ length: 100 }).map((_, i) => ({
   isViolating: Math.random() < 0.05
 }));
 
+const USAGE_CURVE_DATA = Array.from({ length: 30 }).map((_, i) => ({
+  date: `03/${String(i + 1).padStart(2, '0')}`,
+  duration: Math.floor(Math.random() * 500) + 200,
+}));
+
 const BureauDashboard: React.FC = () => {
   // --- State ---
-  const [selectedSchool, setSelectedSchool] = useState('全區');
+  const [selectedSchool, setSelectedSchool] = useState('全市');
   const [isSchoolSelectOpen, setIsSchoolSelectOpen] = useState(false);
   const [schoolSearch, setSchoolSearch] = useState('');
-  const [monthRange, setMonthRange] = useState({ start: '2024-03', end: '2024-03' });
+  const [dateRange, setDateRange] = useState({ start: '2024-03-01', end: '2024-03-31' });
   const [listFilter, setListFilter] = useState<ListFilterType | null>(null);
   const [modalSearch, setModalSearch] = useState('');
 
   // --- Derived Data ---
   const baseFilteredDevices = useMemo(() => {
     return MOCK_DEVICES.filter(device => {
-      return selectedSchool === '全區' || device.school === selectedSchool;
+      if (selectedSchool === '全市') return true;
+      if (selectedSchool === '台南市全國小') return SCHOOL_STRUCTURE['台南市全國小'].includes(device.school);
+      if (selectedSchool === '台南市全國中') return SCHOOL_STRUCTURE['台南市全國中'].includes(device.school);
+      return device.school === selectedSchool;
     });
   }, [selectedSchool]);
 
@@ -95,10 +113,18 @@ const BureauDashboard: React.FC = () => {
   }, [baseFilteredDevices]);
 
   // Chart Data
-  const deviceTypeData = [
-    { name: 'iPad', value: Math.floor(stats.total * 0.75), color: '#3b82f6' },
-    { name: 'Android', value: Math.floor(stats.total * 0.25), color: '#10b981' },
-  ];
+  const deviceModelData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    baseFilteredDevices.forEach(d => {
+      counts[d.model] = (counts[d.model] || 0) + 1;
+    });
+    const colors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
+    return Object.entries(counts).map(([name, value], i) => ({
+      name,
+      value,
+      color: colors[i % colors.length]
+    }));
+  }, [baseFilteredDevices]);
 
   const appCategoryData = [
     { name: '學習類', value: 45, color: '#3b82f6' },
@@ -108,9 +134,18 @@ const BureauDashboard: React.FC = () => {
     { name: '封鎖', value: 5, color: '#ef4444' },
   ];
 
-  const filteredSchools = ['全區', ...SCHOOL_OPTIONS].filter(s => 
-    s.toLowerCase().includes(schoolSearch.toLowerCase())
-  );
+  const filteredSchoolOptions = useMemo(() => {
+    const options: { label: string, isHeader?: boolean, category?: string }[] = [
+      { label: '全市' },
+      { label: '台南市全國小', isHeader: true },
+      ...SCHOOL_STRUCTURE['台南市全國小'].map(s => ({ label: s, category: '台南市全國小' })),
+      { label: '台南市全國中', isHeader: true },
+      ...SCHOOL_STRUCTURE['台南市全國中'].map(s => ({ label: s, category: '台南市全國中' }))
+    ];
+
+    if (!schoolSearch) return options;
+    return options.filter(opt => opt.label.toLowerCase().includes(schoolSearch.toLowerCase()));
+  }, [schoolSearch]);
 
   const modalDevices = useMemo(() => {
     if (!listFilter) return [];
@@ -159,6 +194,22 @@ const BureauDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto p-2">
+      <div className="flex justify-between items-end">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">教育局端數據看板</h1>
+          <p className="text-slate-500 font-medium">即時監控全市教育設備與政策落實狀況</p>
+        </div>
+        <div className="bg-white border-2 border-blue-600 px-6 py-3 rounded-2xl shadow-xl shadow-blue-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="p-2 bg-blue-50 rounded-xl">
+            <Clock className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">數據最後統計時間</p>
+            <p className="text-2xl font-black text-slate-800 leading-none">2024-03-20</p>
+          </div>
+        </div>
+      </div>
+
       {/* Header & Filters */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200 flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -190,21 +241,22 @@ const BureauDashboard: React.FC = () => {
                     />
                   </div>
                   <div className="max-h-60 overflow-y-auto p-1">
-                    {filteredSchools.map((school) => (
+                    {filteredSchoolOptions.map((opt, idx) => (
                       <button
-                        key={school}
+                        key={idx}
                         onClick={() => {
-                          setSelectedSchool(school);
+                          setSelectedSchool(opt.label);
                           setIsSchoolSelectOpen(false);
                           setSchoolSearch('');
                         }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                          selectedSchool === school 
+                          opt.isHeader ? 'font-black text-slate-800 bg-slate-50 cursor-pointer hover:bg-blue-50 hover:text-blue-600' : 
+                          selectedSchool === opt.label 
                             ? 'bg-blue-50 text-blue-600 font-bold' 
-                            : 'text-slate-600 hover:bg-slate-50'
+                            : 'text-slate-600 hover:bg-slate-50 pl-6'
                         }`}
                       >
-                        {school}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
@@ -212,21 +264,21 @@ const BureauDashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Month Range Filter */}
+            {/* Date Range Filter */}
             <div className="w-full md:w-auto">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">篩選月份區間</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">篩選日期區間</label>
               <div className="flex items-center gap-2">
                 <input 
-                  type="month" 
-                  value={monthRange.start}
-                  onChange={(e) => setMonthRange(prev => ({ ...prev, start: e.target.value }))}
+                  type="date" 
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
                   className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <span className="text-slate-400">至</span>
                 <input 
-                  type="month" 
-                  value={monthRange.end}
-                  onChange={(e) => setMonthRange(prev => ({ ...prev, end: e.target.value }))}
+                  type="date" 
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                   className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -246,7 +298,7 @@ const BureauDashboard: React.FC = () => {
             <Clock className="w-6 h-6" />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">當前篩選期間</p>
-              <h3 className="text-lg font-black">{monthRange.start} ~ {monthRange.end}</h3>
+              <h3 className="text-lg font-black">{dateRange.start} ~ {dateRange.end}</h3>
             </div>
           </div>
           <div className="text-right">
@@ -267,7 +319,7 @@ const BureauDashboard: React.FC = () => {
           </div>
           <p className="text-sm font-bold text-slate-500 mb-1">設備總數</p>
           <h3 className="text-4xl font-black">{stats.total}</h3>
-          <p className="text-[10px] font-bold text-blue-600 mt-2 flex items-center">點擊查看清單 <TrendingUp className="w-3 h-3 ml-1" /></p>
+          <p className="text-[10px] font-bold text-blue-600 mt-2 flex items-center">點擊查看清單</p>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden group">
@@ -293,7 +345,7 @@ const BureauDashboard: React.FC = () => {
           </div>
           <p className="text-sm font-bold text-slate-500 mb-1">使用設備數</p>
           <h3 className="text-4xl font-black text-emerald-600">{stats.used}</h3>
-          <p className="text-[10px] font-bold text-emerald-600 mt-2 flex items-center">點擊查看清單 <TrendingUp className="w-3 h-3 ml-1" /></p>
+          <p className="text-[10px] font-bold text-emerald-600 mt-2 flex items-center">點擊查看清單</p>
         </div>
 
         <div 
@@ -305,7 +357,7 @@ const BureauDashboard: React.FC = () => {
           </div>
           <p className="text-sm font-bold text-slate-500 mb-1">未使用設備數</p>
           <h3 className="text-4xl font-black text-rose-600">{stats.unused}</h3>
-          <p className="text-[10px] font-bold text-rose-600 mt-2 flex items-center">點擊查看清單 <TrendingDown className="w-3 h-3 ml-1" /></p>
+          <p className="text-[10px] font-bold text-rose-600 mt-2 flex items-center">點擊查看清單</p>
         </div>
       </div>
 
@@ -340,20 +392,58 @@ const BureauDashboard: React.FC = () => {
 
       {/* Charts Section */}
       <div className="space-y-6">
+        {/* Usage Curve Chart */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <div className="flex items-center space-x-2 mb-6">
+            <LineChartIcon className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-bold text-slate-800">使用曲線圖</h3>
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={USAGE_CURVE_DATA}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  label={{ value: '使用時長 (分鐘)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#64748b', fontSize: 12 } }}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="duration" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3} 
+                  dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         {/* Distribution Charts Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Device Type Distribution */}
+          {/* Device Model Distribution */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
             <div className="flex items-center space-x-2 mb-6">
               <Tablet className="w-5 h-5 text-indigo-500" />
-              <h3 className="text-lg font-bold text-slate-800">設備類型分佈</h3>
+              <h3 className="text-lg font-bold text-slate-800">設備型號分佈</h3>
             </div>
             <div className="flex items-center h-64">
               <div className="w-1/2 h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={deviceTypeData}
+                      data={deviceModelData}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -361,7 +451,7 @@ const BureauDashboard: React.FC = () => {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {deviceTypeData.map((entry, index) => (
+                      {deviceModelData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -372,7 +462,7 @@ const BureauDashboard: React.FC = () => {
                 </ResponsiveContainer>
               </div>
               <div className="w-1/2 pl-4 space-y-4">
-                {deviceTypeData.map((item, index) => (
+                {deviceModelData.map((item, index) => (
                   <div key={index} className="flex flex-col">
                     <div className="flex items-center space-x-2 mb-1">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
