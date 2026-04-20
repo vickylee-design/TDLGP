@@ -24,13 +24,28 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { toast, Toaster } from 'sonner';
 
-type TabType = 'system' | 'announcement' | 'app-category';
+type TabType = 'system' | 'announcement' | 'app-category' | 'school' | 'project';
 
 interface Semester {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
+}
+
+interface SchoolInfo {
+  id: string;
+  code: string;
+  name: string;
+  type: 'Junior High' | 'Elementary';
+  region?: string;
+}
+
+interface ProjectInfo {
+  id: string;
+  name: string;
+  year: string;
+  description: string;
 }
 
 interface Announcement {
@@ -62,6 +77,27 @@ const BureauSystemSettingsNew: React.FC = () => {
   ]);
   const [newSemester, setNewSemester] = useState({ name: '', startDate: '', endDate: '' });
   const [unusedDays, setUnusedDays] = useState(30);
+
+  // Tab: School Management State
+  const [schools, setSchools] = useState<SchoolInfo[]>([
+    { id: '1', code: '014567', name: '永康國小', type: 'Elementary', region: '永康區' },
+    { id: '2', code: '014568', name: '大橋國小', type: 'Elementary', region: '永康區' },
+    { id: '3', code: '014569', name: '復興國中', type: 'Junior High', region: '東區' },
+    { id: '4', code: '014570', name: '後甲國中', type: 'Junior High', region: '東區' }
+  ]);
+  const [showSchoolModal, setShowSchoolModal] = useState(false);
+  const [editingSchool, setEditingSchool] = useState<SchoolInfo | null>(null);
+  const [newSchool, setNewSchool] = useState<Omit<SchoolInfo, 'id'>>({ code: '', name: '', type: 'Elementary', region: '' });
+  const [schoolSearch, setSchoolSearch] = useState('');
+
+  // Tab: Project Management State
+  const [projects, setProjects] = useState<ProjectInfo[]>([
+    { id: '1', name: '生生用平板', year: '111', description: '教育部推動中小學數位學習精進方案' },
+    { id: '2', name: '前瞻計畫', year: '112', description: '校園數位建設' }
+  ]);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<ProjectInfo | null>(null);
+  const [newProject, setNewProject] = useState<Omit<ProjectInfo, 'id'>>({ name: '', year: '', description: '' });
 
   // Tab 2: Announcement State
   const [announcements, setAnnouncements] = useState<Announcement[]>([
@@ -190,6 +226,53 @@ const BureauSystemSettingsNew: React.FC = () => {
     toast.success(`已新增分類: ${newCategoryName.trim()}`);
   };
 
+  const handleAddSchool = () => {
+    if (!newSchool.code || !newSchool.name) {
+      toast.error('請填寫完整學校資訊');
+      return;
+    }
+    
+    if (editingSchool) {
+      setSchools(schools.map(s => s.id === editingSchool.id ? { ...newSchool, id: s.id } : s));
+      toast.success('學校資訊已更新');
+    } else {
+      setSchools([...schools, { ...newSchool, id: Date.now().toString() }]);
+      toast.success('學校已新增');
+    }
+    
+    setNewSchool({ code: '', name: '', type: 'Elementary', region: '' });
+    setEditingSchool(null);
+    setShowSchoolModal(false);
+  };
+
+  const handleEditSchool = (school: SchoolInfo) => {
+    setEditingSchool(school);
+    setNewSchool({
+      code: school.code,
+      name: school.name,
+      type: school.type,
+      region: school.region || ''
+    });
+    setShowSchoolModal(true);
+  };
+
+  const handleSaveProject = () => {
+    if (editingProject) {
+      setProjects(projects.map(p => p.id === editingProject.id ? editingProject : p));
+      setEditingProject(null);
+      toast.success('計畫已更新');
+    } else {
+      if (!newProject.name) {
+        toast.error('請輸入計畫名稱');
+        return;
+      }
+      setProjects([...projects, { ...newProject, id: Date.now().toString() }]);
+      setNewProject({ name: '', year: '', description: '' });
+      toast.success('計畫已新增');
+    }
+    setShowProjectModal(false);
+  };
+
   const filteredApps = apps.filter(app => 
     app.name.toLowerCase().includes(appSearch.toLowerCase()) || 
     app.bundleId.toLowerCase().includes(appSearch.toLowerCase())
@@ -206,44 +289,66 @@ const BureauSystemSettingsNew: React.FC = () => {
             <Settings className="w-7 h-7 mr-3 text-blue-600" />
             系統設定
           </h2>
-          <p className="text-slate-500 text-sm mt-1">管理全域系統參數、發布行政公告及定義 App 資源分類。</p>
+          <p className="text-slate-500 text-sm mt-1">管理全域系統參數、發布行政通知及定義 App 資源分類。</p>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit">
+      <div className="flex flex-wrap bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit gap-1">
         <button
           onClick={() => setActiveTab('system')}
-          className={`flex items-center px-8 py-3 text-sm font-bold rounded-xl transition-all ${
+          className={`flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all ${
             activeTab === 'system'
               ? 'bg-white text-blue-600 shadow-md'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <Settings className="w-4 h-4 mr-2" />
-          系統設定
+          常規設定
+        </button>
+        <button
+          onClick={() => setActiveTab('school')}
+          className={`flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all ${
+            activeTab === 'school'
+              ? 'bg-white text-blue-600 shadow-md'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <LayoutGrid className="w-4 h-4 mr-2" />
+          學校管理
+        </button>
+        <button
+          onClick={() => setActiveTab('project')}
+          className={`flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all ${
+            activeTab === 'project'
+              ? 'bg-white text-blue-600 shadow-md'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          計畫管理
         </button>
         <button
           onClick={() => setActiveTab('announcement')}
-          className={`flex items-center px-8 py-3 text-sm font-bold rounded-xl transition-all ${
+          className={`flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all ${
             activeTab === 'announcement'
               ? 'bg-white text-blue-600 shadow-md'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <Bell className="w-4 h-4 mr-2" />
-          公告管理
+          通知管理
         </button>
         <button
           onClick={() => setActiveTab('app-category')}
-          className={`flex items-center px-8 py-3 text-sm font-bold rounded-xl transition-all ${
+          className={`flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all ${
             activeTab === 'app-category'
               ? 'bg-white text-blue-600 shadow-md'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <LayoutGrid className="w-4 h-4 mr-2" />
-          App 類別管理
+          <Smartphone className="w-4 h-4 mr-2" />
+          App 類別
         </button>
       </div>
 
@@ -370,7 +475,7 @@ const BureauSystemSettingsNew: React.FC = () => {
             {/* Announcement List */}
             <div className="lg:col-span-1 space-y-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-slate-800">公告列表</h3>
+                <h3 className="text-lg font-bold text-slate-800">通知列表</h3>
                 <button 
                   onClick={() => setEditingAnnouncement({ id: '', title: '', content: '', publishDate: new Date().toISOString().split('T')[0], target: 'all', status: 'draft' })}
                   className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md"
@@ -409,7 +514,7 @@ const BureauSystemSettingsNew: React.FC = () => {
                     className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[700px]"
                   >
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                      <h3 className="text-lg font-bold text-slate-800">編輯公告</h3>
+                      <h3 className="text-lg font-bold text-slate-800">編輯通知</h3>
                       <div className="flex items-center gap-2">
                         <button 
                           onClick={() => handleDeleteAnnouncement(editingAnnouncement.id)}
@@ -429,7 +534,7 @@ const BureauSystemSettingsNew: React.FC = () => {
                     <div className="p-8 flex-1 overflow-y-auto space-y-6">
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">公告名稱</label>
+                          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">通知名稱</label>
                           <input 
                             type="text" 
                             value={editingAnnouncement.title}
@@ -499,7 +604,7 @@ const BureauSystemSettingsNew: React.FC = () => {
                       )}
 
                       <div className="space-y-2 flex flex-col h-[350px]">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">公告內容</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">通知內容</label>
                         <div className="flex-1 border border-slate-200 rounded-xl overflow-hidden flex flex-col">
                           {/* Toolbar */}
                           <div className="flex items-center gap-1 p-2 bg-slate-50 border-b border-slate-200">
@@ -526,14 +631,14 @@ const BureauSystemSettingsNew: React.FC = () => {
                         className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center"
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        儲存公告
+                        儲存通知
                       </button>
                     </div>
                   </motion.div>
                 ) : (
                   <div className="h-[700px] bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
                     <Bell className="w-12 h-12 mb-4 opacity-20" />
-                    <p className="font-bold">選擇公告進行編輯或點擊 "+" 新增</p>
+                    <p className="font-bold">選擇通知進行編輯或點擊 "+" 新增</p>
                   </div>
                 )}
               </AnimatePresence>

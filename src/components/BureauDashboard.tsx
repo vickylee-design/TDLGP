@@ -53,16 +53,26 @@ interface DeviceData {
 }
 
 // --- Mock Data ---
+const SCHOOL_ENTITIES = [
+  { code: '3001', name: '復興國小', type: '台南市全國小' },
+  { code: '3002', name: '忠義國小', type: '台南市全國小' },
+  { code: '3003', name: '勝利國小', type: '台南市全國小' },
+  { code: '3004', name: '大同國小', type: '台南市全國小' },
+  { code: '3005', name: '新興國小', type: '台南市全國小' },
+  { code: '4001', name: '安南國中', type: '台南市全國中' },
+  { code: '4002', name: '永康國中', type: '台南市全國中' },
+  { code: '4003', name: '新東國中', type: '台南市全國中' },
+  { code: '4004', name: '崇明國中', type: '台南市全國中' },
+  { code: '4005', name: '後甲國中', type: '台南市全國中' },
+];
+
 const SCHOOL_STRUCTURE = {
   '全市': [],
-  '台南市全國小': ['復興國小', '忠義國小', '勝利國小', '大同國小', '新興國小'],
-  '台南市全國中': ['安南國中', '永康國中', '新東國中', '崇明國中', '後甲國中']
+  '台南市全國小': SCHOOL_ENTITIES.filter(s => s.type === '台南市全國小').map(s => s.name),
+  '台南市全國中': SCHOOL_ENTITIES.filter(s => s.type === '台南市全國中').map(s => s.name)
 };
 
-const ALL_SCHOOLS = [
-  ...SCHOOL_STRUCTURE['台南市全國小'],
-  ...SCHOOL_STRUCTURE['台南市全國中']
-];
+const ALL_SCHOOLS = SCHOOL_ENTITIES.map(s => s.name);
 
 const MOCK_DEVICES: DeviceData[] = Array.from({ length: 100 }).map((_, i) => ({
   id: `dev-${i}`,
@@ -88,6 +98,7 @@ const BureauDashboard: React.FC = () => {
   const [selectedSchool, setSelectedSchool] = useState('全市');
   const [isSchoolSelectOpen, setIsSchoolSelectOpen] = useState(false);
   const [schoolSearch, setSchoolSearch] = useState('');
+  const [deviceSearch, setDeviceSearch] = useState('');
   const [dateRange, setDateRange] = useState({ start: '2024-03-01', end: '2024-03-31' });
   const [listFilter, setListFilter] = useState<ListFilterType | null>(null);
   const [modalSearch, setModalSearch] = useState('');
@@ -95,12 +106,20 @@ const BureauDashboard: React.FC = () => {
   // --- Derived Data ---
   const baseFilteredDevices = useMemo(() => {
     return MOCK_DEVICES.filter(device => {
-      if (selectedSchool === '全市') return true;
-      if (selectedSchool === '台南市全國小') return SCHOOL_STRUCTURE['台南市全國小'].includes(device.school);
-      if (selectedSchool === '台南市全國中') return SCHOOL_STRUCTURE['台南市全國中'].includes(device.school);
-      return device.school === selectedSchool;
+      const matchesSchool = (() => {
+        if (selectedSchool === '全市') return true;
+        if (selectedSchool === '台南市全國小') return SCHOOL_STRUCTURE['台南市全國小'].includes(device.school);
+        if (selectedSchool === '台南市全國中') return SCHOOL_STRUCTURE['台南市全國中'].includes(device.school);
+        return device.school === selectedSchool;
+      })();
+      
+      const matchesDevice = !deviceSearch || 
+        device.name.toLowerCase().includes(deviceSearch.toLowerCase()) ||
+        device.serial.toLowerCase().includes(deviceSearch.toLowerCase());
+
+      return matchesSchool && matchesDevice;
     });
-  }, [selectedSchool]);
+  }, [selectedSchool, deviceSearch]);
 
   const stats = useMemo(() => {
     const total = baseFilteredDevices.length;
@@ -135,16 +154,20 @@ const BureauDashboard: React.FC = () => {
   ];
 
   const filteredSchoolOptions = useMemo(() => {
-    const options: { label: string, isHeader?: boolean, category?: string }[] = [
+    const options: { label: string, code?: string, isHeader?: boolean, category?: string }[] = [
       { label: '全市' },
       { label: '台南市全國小', isHeader: true },
-      ...SCHOOL_STRUCTURE['台南市全國小'].map(s => ({ label: s, category: '台南市全國小' })),
+      ...SCHOOL_ENTITIES.filter(s => s.type === '台南市全國小').map(s => ({ label: s.name, code: s.code, category: '台南市全國小' })),
       { label: '台南市全國中', isHeader: true },
-      ...SCHOOL_STRUCTURE['台南市全國中'].map(s => ({ label: s, category: '台南市全國中' }))
+      ...SCHOOL_ENTITIES.filter(s => s.type === '台南市全國中').map(s => ({ label: s.name, code: s.code, category: '台南市全國中' }))
     ];
 
     if (!schoolSearch) return options;
-    return options.filter(opt => opt.label.toLowerCase().includes(schoolSearch.toLowerCase()));
+    const search = schoolSearch.toLowerCase();
+    return options.filter(opt => 
+      opt.label.toLowerCase().includes(search) || 
+      (opt.code && opt.code.includes(search))
+    );
   }, [schoolSearch]);
 
   const modalDevices = useMemo(() => {
@@ -256,12 +279,35 @@ const BureauDashboard: React.FC = () => {
                             : 'text-slate-600 hover:bg-slate-50 pl-6'
                         }`}
                       >
-                        {opt.label}
+                        {opt.isHeader || opt.label === '全市' ? opt.label : `${opt.code} ${opt.label}`}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Global Device Search */}
+            <div className="w-full md:w-72">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">搜尋特定設備</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="輸入設備序號或名稱..."
+                  value={deviceSearch}
+                  onChange={(e) => setDeviceSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
+                />
+                {deviceSearch && (
+                  <button 
+                    onClick={() => setDeviceSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 rounded-full"
+                  >
+                    <X className="w-3 h-3 text-slate-400" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Date Range Filter */}
@@ -301,6 +347,12 @@ const BureauDashboard: React.FC = () => {
               <h3 className="text-lg font-black">{dateRange.start} ~ {dateRange.end}</h3>
             </div>
           </div>
+          {deviceSearch && (
+            <div className="text-center px-6 border-x border-white/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">搜尋設備</p>
+              <h3 className="text-lg font-black">{deviceSearch}</h3>
+            </div>
+          )}
           <div className="text-right">
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">統計範圍</p>
             <h3 className="text-lg font-black">{selectedSchool}</h3>

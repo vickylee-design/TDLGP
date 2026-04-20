@@ -59,9 +59,28 @@ export interface TransferRequest {
 
 export enum AssetStatus {
   NORMAL = '正常',
-  TRANSFERRING = '調撥中',
+  TRANSFER_PENDING = '調撥中(待審核)',
+  TRANSFER_APPROVED = '調撥中(已核准)',
   REPLACEMENT = '汰換',
-  SCRAPPED = '報廢'
+  SCRAPPED = '報廢',
+  LOST = '遺失'
+}
+
+export interface BureauTransferRequest {
+  id: string;
+  docNo?: string;
+  sourceSchool: string;
+  sourceSchoolCode: string;
+  targetSchool: string;
+  targetSchoolCode: string;
+  deviceSerials: string[];
+  applicant: string;
+  requestDate: string;
+  approvalDate?: string;
+  completionDate?: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'COMPLETED' | 'REJECTED';
+  rejectionReason?: string;
 }
 
 export interface AssetHistory {
